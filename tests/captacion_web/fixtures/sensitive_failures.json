@@ -1,0 +1,18 @@
+{
+  "source": "fixture-fallos-sensibles-v1",
+  "records": [
+    {
+      "external_id": "sf-001",
+      "name": "Negocio Valido",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 1 #2-3",
+      "rating": 4.6,
+      "review_count": 40
+    }
+  ],
+  "fail_queries": {
+    "Restaurante en Bogota, Colombia": "tok_fallo_sintetico_987"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "source": "fixture-sintetico-parcial-v1",
+  "records": [
+    {
+      "external_id": "fx-p01",
+      "name": "Sabor Valido",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 100 #10-20, Chapinero, Bogota",
+      "rating": 4.7,
+      "review_count": 80,
+      "business_status": "ACTIVO",
+      "website_url": null,
+      "phone": "+573001110001"
+    },
+    {
+      "external_id": "fx-p02",
+      "name": "Sabor Invalido",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 110 #10-20, Chapinero, Bogota",
+      "rating": 7.0,
+      "review_count": 10,
+      "business_status": "ACTIVO",
+      "website_url": null,
+      "phone": "+573001110002"
+    }
+  ],
+  "fail_queries": {
+    "sabor en Bogota, Colombia": "TIMEOUT"
+  }
+}

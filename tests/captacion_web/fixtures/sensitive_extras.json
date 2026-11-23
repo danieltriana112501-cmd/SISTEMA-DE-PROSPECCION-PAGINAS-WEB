@@ -1,0 +1,22 @@
+{
+  "source": "fixture-extras-v1",
+  "records": [
+    {
+      "external_id": "ext-001",
+      "name": "Negocio Con Extras",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 99 #1-2",
+      "rating": 4.6,
+      "review_count": 40,
+      "phone": "+573000000001",
+      "website_url": null,
+      "password": "sup3r-secreto-123",
+      "token": "tok_sintetico_456",
+      "email": "persona.ficticia@example.test",
+      "owner_name": "Fulano Sintetico",
+      "internal_notes": "no persistir"
+    }
+  ]
+}

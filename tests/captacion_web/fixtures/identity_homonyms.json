@@ -1,0 +1,41 @@
+{
+  "source": "fixture-homonimos-v1",
+  "records": [
+    {
+      "name": "Homonimo Sin Direccion",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": null,
+      "rating": 4.6,
+      "review_count": 40
+    },
+    {
+      "name": "Homonimo Sin Direccion",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": null,
+      "rating": 4.9,
+      "review_count": 90
+    },
+    {
+      "name": "Duplicado Exacto",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": null,
+      "rating": 4.7,
+      "review_count": 50
+    },
+    {
+      "name": "Duplicado Exacto",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": null,
+      "rating": 4.7,
+      "review_count": 50
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "source": "fixture-invalidos-v1",
+  "records": [
+    {
+      "external_id": "inv-ok",
+      "name": "Valido",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 1 #2-3",
+      "rating": 4.6,
+      "review_count": 40
+    },
+    {
+      "external_id": "inv-nocity",
+      "name": "Sin Ciudad",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "address": "Calle 2 #3-4",
+      "rating": 4.7,
+      "review_count": 50
+    },
+    {
+      "external_id": "inv-badtype",
+      "name": "Tipo Invalido",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 3 #4-5",
+      "rating": "4.8",
+      "review_count": 60
+    }
+  ]
+}

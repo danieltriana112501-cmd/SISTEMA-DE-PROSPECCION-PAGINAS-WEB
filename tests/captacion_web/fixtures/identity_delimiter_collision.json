@@ -1,0 +1,23 @@
+{
+  "source": "fixture-colision-delimitador-v1",
+  "records": [
+    {
+      "name": "Cafe|Norte",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 1",
+      "rating": 4.6,
+      "review_count": 40
+    },
+    {
+      "name": "Cafe",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Norte|Calle 1",
+      "rating": 4.7,
+      "review_count": 50
+    }
+  ]
+}

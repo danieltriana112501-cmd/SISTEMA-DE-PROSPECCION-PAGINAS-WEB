@@ -1,0 +1,23 @@
+{
+  "source": "fixture-pais-identidad-v1",
+  "records": [
+    {
+      "name": "Sede Frontera",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Ciudad Ficticia",
+      "address": "Calle 1 #2-3",
+      "rating": 4.6,
+      "review_count": 40
+    },
+    {
+      "name": "Sede Frontera",
+      "category": "Restaurante",
+      "country": "Ecuador",
+      "city": "Ciudad Ficticia",
+      "address": "Calle 1 #2-3",
+      "rating": 4.8,
+      "review_count": 80
+    }
+  ]
+}

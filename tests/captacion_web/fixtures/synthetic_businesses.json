@@ -1,0 +1,108 @@
+{
+  "source": "fixture-sintetico-v1",
+  "records": [
+    {
+      "external_id": "fx-001",
+      "name": "Sabor Local Chapinero",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 50 #10-20, Chapinero, Bogota",
+      "rating": 4.5,
+      "review_count": 30,
+      "business_status": "ACTIVO",
+      "website_url": null,
+      "phone": "+573001112233",
+      "observed_at": "2026-11-20T12:00:00+00:00"
+    },
+    {
+      "external_id": "fx-002",
+      "name": "Sabor Local Usaquen",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Carrera 15 #116-30, Usaquen, Bogota",
+      "rating": 4.8,
+      "review_count": 120,
+      "business_status": "ACTIVO",
+      "website_url": "https://saborlocal.example",
+      "phone": "+573001112233",
+      "observed_at": "2026-11-20T12:00:00+00:00"
+    },
+    {
+      "external_id": "fx-003",
+      "name": "Cocina de Barrio",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 45 #12-10, Chapinero, Bogota",
+      "rating": 4.49,
+      "review_count": 29,
+      "website_url": null,
+      "phone": "+573004445566"
+    },
+    {
+      "external_id": "fx-004",
+      "name": "Sin Reputacion",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Carrera 7 #20-10, Chapinero, Bogota",
+      "rating": null,
+      "review_count": null,
+      "business_status": "DESCONOCIDO",
+      "website_url": null,
+      "phone": null
+    },
+    {
+      "external_id": "fx-005",
+      "name": "Paisa Gourmet",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Medellin",
+      "address": "Calle 10 #40-20, El Poblado, Medellin",
+      "rating": 4.9,
+      "review_count": 200,
+      "business_status": "ACTIVO",
+      "website_url": null,
+      "phone": "+573007778899"
+    },
+    {
+      "external_id": "fx-006",
+      "name": "Pan de la Esquina",
+      "category": "Panaderia",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 60 #5-10, Chapinero, Bogota",
+      "rating": 4.7,
+      "review_count": 50,
+      "business_status": "ACTIVO",
+      "website_url": null,
+      "phone": "+573001230000"
+    },
+    {
+      "name": "Sede Compartida A",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 70 #8-10, Chapinero, Bogota",
+      "rating": 4.6,
+      "review_count": 40,
+      "business_status": "ACTIVO",
+      "website_url": "https://compartido.example",
+      "phone": "+573009990000"
+    },
+    {
+      "name": "Sede Compartida B",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 80 #9-10, Chapinero, Bogota",
+      "rating": 4.7,
+      "review_count": 45,
+      "business_status": "ACTIVO",
+      "website_url": "https://compartido.example",
+      "phone": "+573009990000"
+    }
+  ]
+}

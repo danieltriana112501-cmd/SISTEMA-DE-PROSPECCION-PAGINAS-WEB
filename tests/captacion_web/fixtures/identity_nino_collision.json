@@ -1,0 +1,23 @@
+{
+  "source": "fixture-nino-collision-v1",
+  "records": [
+    {
+      "name": "El Niño",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Carrera 10 #20-30",
+      "rating": 4.8,
+      "review_count": 80
+    },
+    {
+      "name": "El Nino",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Carrera 10 #20-30",
+      "rating": 4.5,
+      "review_count": 35
+    }
+  ]
+}

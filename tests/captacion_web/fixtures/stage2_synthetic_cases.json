@@ -1,0 +1,206 @@
+{
+  "source": "fixture-stage2-sintetico-v1",
+  "cases": [
+    {
+      "id": "case-01-web-corroborada",
+      "name": "Panadería El Trigo Dorado",
+      "category": "Panadería",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 45 #7-12, Chapinero, Bogota",
+      "phone": "+573001112233",
+      "website_url": null,
+      "rating": 4.8,
+      "review_count": 85,
+      "business_status": "ACTIVO",
+      "manual_evidence": {
+        "queries": [
+          {
+            "consulta": "Panadería El Trigo Dorado Bogota",
+            "resultado": "COMPLETA",
+            "evidence_ids": ["E01"]
+          }
+        ],
+        "candidates": [
+          {
+            "url": "https://eltrigodorado.wixsite.com/panaderia",
+            "tipo": "OFICIAL",
+            "identidad": "COINCIDE",
+            "evidence_ids": ["E01"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-02-solo-red-social",
+      "name": "Boutique Café Chapinero",
+      "category": "Cafetería",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Carrera 13 #55-20, Chapinero, Bogota",
+      "phone": "+573002223344",
+      "website_url": null,
+      "rating": 4.6,
+      "review_count": 42,
+      "business_status": "ACTIVO",
+      "manual_evidence": {
+        "queries": [
+          {
+            "consulta": "Boutique Café Chapinero sitio web",
+            "resultado": "COMPLETA",
+            "evidence_ids": ["E10"]
+          }
+        ],
+        "candidates": [
+          {
+            "url": "https://instagram.com/boutiquecafechapinero",
+            "tipo": "RED_SOCIAL",
+            "identidad": "COINCIDE",
+            "evidence_ids": ["E11"]
+          }
+        ],
+        "social_profiles": [
+          {
+            "platform": "INSTAGRAM",
+            "url": "https://instagram.com/boutiquecafechapinero",
+            "confidence": "alta",
+            "status": "CONFIRMADO",
+            "signals": "coincide direccion en bio y telefono",
+            "evidence_ids": ["E11"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-03-solo-agregador",
+      "name": "Parrilla Andina Central",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 72 #10-34, Chapinero, Bogota",
+      "phone": "+573003334455",
+      "website_url": null,
+      "rating": 4.7,
+      "review_count": 95,
+      "business_status": "ACTIVO",
+      "manual_evidence": {
+        "queries": [
+          {
+            "consulta": "Parrilla Andina Central Bogota",
+            "resultado": "COMPLETA",
+            "evidence_ids": ["E20"]
+          }
+        ],
+        "candidates": [
+          {
+            "url": "https://tripadvisor.example/parrilla-andina",
+            "tipo": "AGREGADOR",
+            "identidad": "COINCIDE",
+            "evidence_ids": ["E21"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-04-red-y-agregador",
+      "name": "Pizzería Nápoles Urbana",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Carrera 7 #60-15, Chapinero, Bogota",
+      "phone": "+573004445566",
+      "website_url": null,
+      "rating": 4.9,
+      "review_count": 140,
+      "business_status": "ACTIVO",
+      "manual_evidence": {
+        "queries": [
+          {
+            "consulta": "Pizzería Nápoles Urbana Bogota web",
+            "resultado": "COMPLETA",
+            "evidence_ids": ["E30"]
+          }
+        ],
+        "candidates": [
+          {
+            "url": "https://facebook.com/napolesurbanapizza",
+            "tipo": "RED_SOCIAL",
+            "identidad": "COINCIDE",
+            "evidence_ids": ["E31"]
+          },
+          {
+            "url": "https://tripadvisor.example/napoles-urbana",
+            "tipo": "AGREGADOR",
+            "identidad": "COINCIDE",
+            "evidence_ids": ["E32"]
+          }
+        ],
+        "social_profiles": [
+          {
+            "platform": "FACEBOOK",
+            "url": "https://facebook.com/napolesurbanapizza",
+            "confidence": "alta",
+            "status": "CONFIRMADO",
+            "signals": "coincide telefono y menu de la sede",
+            "evidence_ids": ["E31"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-05-oficial-inaccesible",
+      "name": "Bistró La Montaña Antigua",
+      "category": "Restaurante",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Calle 85 #11-20, Bogota",
+      "phone": "+573005556677",
+      "website_url": "https://bistrolamontana.example.invalid",
+      "rating": 4.7,
+      "review_count": 55,
+      "business_status": "ACTIVO",
+      "manual_evidence": {
+        "queries": [
+          {
+            "consulta": "Bistró La Montaña Antigua Bogota",
+            "resultado": "COMPLETA",
+            "evidence_ids": ["E40"]
+          }
+        ],
+        "candidates": [
+          {
+            "url": "https://bistrolamontana.example.invalid",
+            "tipo": "OFICIAL",
+            "identidad": "COINCIDE",
+            "evidence_ids": ["E41"],
+            "access_error": "HTTP 503 Service Unavailable / Connection timeout"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case-06-busqueda-bloqueada",
+      "name": "Heladería Crema Glacial",
+      "category": "Heladería",
+      "country": "Colombia",
+      "city": "Bogota",
+      "address": "Carrera 15 #80-10, Bogota",
+      "phone": "+573006667788",
+      "website_url": null,
+      "rating": 4.5,
+      "review_count": 32,
+      "business_status": "ACTIVO",
+      "manual_evidence": {
+        "queries": [
+          {
+            "consulta": "Heladería Crema Glacial Bogota",
+            "resultado": "BLOQUEADA",
+            "evidence_ids": ["E50"],
+            "error": "RATE_LIMIT / CAPTCHA challenge"
+          }
+        ],
+        "candidates": []
+      }
+    }
+  ]
+}
