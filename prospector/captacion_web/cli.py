@@ -387,7 +387,10 @@ def _print_report(report: RunReport) -> None:
         print(f"reporte: {report.report_path}")
 
 
-SUBCOMMANDS = {"review-web", "review-social", "show-reviews", "import-reviews"}
+SUBCOMMANDS = {"review-web", "review-social", "review-decision-maker", "show-reviews", "import-reviews"}
+
+PENDING_DECISION_MAKER = "PENDIENTE_MANUAL"
+CONFIRMED_DECISION_MAKER = ("PROPIETARIO_CONFIRMADO", "DECISOR_ALTERNO_CONFIRMADO")
 
 
 def build_review_web_parser() -> argparse.ArgumentParser:
@@ -594,10 +597,54 @@ def handle_review_social(args: list[str]) -> int:
     return _save_manual_review(build_review_social_parser().parse_args(args), 'social')
 
 
+def handle_review_decision_maker(args: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python -m prospector.captacion_web review-decision-maker",
+        description="Registra una revisión manual del decisor. No autoriza contacto.",
+    )
+    parser.add_argument("--db", type=Path, default=config.DEFAULT_DB_PATH)
+    parser.add_argument("--prospect-id", required=True, help="ID interno exacto del prospecto")
+    parser.add_argument("--status", required=True,
+                        choices=(PENDING_DECISION_MAKER, "NO_VERIFICABLE", *CONFIRMED_DECISION_MAKER))
+    parser.add_argument("--name", default="")
+    parser.add_argument("--role", default="")
+    parser.add_argument("--source-url", default="", help="Fuente profesional pública HTTP(S)")
+    parser.add_argument("--reviewer", required=True)
+    parser.add_argument("--reviewed-at", help="Fecha y hora ISO 8601 con zona; por defecto, ahora en UTC")
+    parsed = parser.parse_args(args)
+    reviewer, name, role, source = (s.strip() for s in (
+        parsed.reviewer, parsed.name, parsed.role, parsed.source_url,
+    ))
+    confirmed = parsed.status in CONFIRMED_DECISION_MAKER
+    if (not reviewer or (source and not is_valid_web_url(source))
+            or (confirmed and not (name and role and source)) or (not confirmed and (name or role))):
+        print("ERROR: Indica revisor. Para confirmar, indica también nombre, cargo y fuente HTTP(S). "
+              "No incluyas nombre ni cargo en estados sin confirmar.", file=sys.stderr)
+        return 1
+    try:
+        reviewed_at = _reviewed_at({"reviewed_at": parsed.reviewed_at} if parsed.reviewed_at is not None else {})
+        with CaptacionWebStore(parsed.db, existing_only=True) as store:
+            if store.get_prospect(parsed.prospect_id) is None:
+                print("ERROR: No se encontró ese ID interno en Captación Web.", file=sys.stderr)
+                return 1
+            store.add_decision_maker_review(
+                parsed.prospect_id, status=parsed.status, name=name or None, role=role or None,
+                source_url=source or None, reviewer=reviewer, reviewed_at=reviewed_at,
+            )
+    except DatabaseRejectedError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return EXIT_DB_REJECTED
+    except (ValueError, OverflowError, sqlite3.Error):
+        print("ERROR: No se registró la revisión. Verifica la fecha y la base de Captación Web.", file=sys.stderr)
+        return 1
+    print(f"Decisor registrado: prospecto={parsed.prospect_id}, estado={parsed.status}. No autoriza contacto.")
+    return 0
+
+
 def build_show_reviews_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="python -m prospector.captacion_web show-reviews",
-        description="Consulta las revisiones web y candidatos sociales de un prospecto.",
+        description="Muestra la ficha y el historial del prospecto sin modificar la base.",
     )
     p.add_argument("--db", type=Path, default=config.DEFAULT_DB_PATH, help="Ruta de la base SQLite")
     p.add_argument("--prospect-id", required=True, help="ID interno del prospecto (o ID externo no ambiguo)")
@@ -610,10 +657,13 @@ def handle_show_reviews(args: list[str]) -> int:
     parsed = parser.parse_args(args)
 
     try:
-        store = CaptacionWebStore(parsed.db)
+        store = CaptacionWebStore(parsed.db, read_only=True)
     except DatabaseRejectedError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return EXIT_DB_REJECTED
+    except sqlite3.Error:
+        print("ERROR: No se pudo abrir la base de Captación Web en solo lectura.", file=sys.stderr)
+        return 1
 
     try:
         prospect = store.find_prospect(parsed.prospect_id)
@@ -640,9 +690,41 @@ def handle_show_reviews(args: list[str]) -> int:
             print(json.dumps(data, ensure_ascii=False, indent=2))
             return 0
 
+        decision_history = store.get_decision_maker_reviews(pid)
+        decision = decision_history[0] if decision_history else None
+        decision_status = decision["status"] if decision else PENDING_DECISION_MAKER
         print(f"Prospecto: {prospect['name']} (ID: {pid})")
         print(f"Ubicación: {prospect.get('city')}, {prospect.get('country')} | Dirección: {prospect.get('address_public')}")
         print(f"Identidad: {prospect['external_id_kind']} ({prospect['external_id']})")
+        web_status = latest_web["status"] if latest_web else WebsiteStatus.PENDIENTE_VERIFICACION.value
+        print(f"Web vigente: {web_status}")
+        if latest_web:
+            print(f"  Fecha: {latest_web['reviewed_at']} | URL: {latest_web['official_url'] or 'sin registrar'}")
+        confirmed = [s for s in latest_socials if s["status"] == SocialVerificationStatus.CONFIRMADO.value]
+        print(f"Redes confirmadas vigentes: {len(confirmed)}")
+        for profile in confirmed:
+            print(f"  - {profile['platform']}: {profile['url']}")
+        score = latest_rank["score"] if latest_rank else None
+        print(f"Ranking: {score}/100 (estimación)" if score is not None else "Ranking: pendiente")
+        pending = []
+        if prospect["external_id_kind"] == EXTERNAL_ID_REVISION:
+            pending.append("identidad")
+        if web_status in (WebsiteStatus.PENDIENTE_VERIFICACION.value, WebsiteStatus.OFICIAL_NO_DISPONIBLE.value):
+            pending.append("verificación web")
+        if not latest_socials or any(s["status"] == SocialVerificationStatus.CANDIDATO.value for s in latest_socials):
+            pending.append("revisión social")
+        if score is None:
+            pending.append("ranking")
+        if decision_status not in CONFIRMED_DECISION_MAKER:
+            pending.append("decisor")
+        print("Pendientes: " + (", ".join(pending) if pending else "ninguno en esta ficha"))
+        print(f"Decisor: {decision_status}")
+        if decision and decision_status in CONFIRMED_DECISION_MAKER:
+            print(f"  {decision['name']} | {decision['role']} | Fuente: {decision['source_url']}")
+        if decision_history:
+            print(f"Historial de decisor ({len(decision_history)}):")
+            for entry in decision_history:
+                print(f"  - [{entry['reviewed_at']}] {entry['status']} por {entry['reviewer']}")
         print(f"Revisiones Web ({len(web_reviews)}):")
         if not web_reviews:
             print("  (sin revisiones registradas)")
@@ -661,6 +743,9 @@ def handle_show_reviews(args: list[str]) -> int:
             print(f"Último Ranking:")
             print(f"  score: {latest_rank.get('score')} | eligible: {bool(latest_rank.get('eligible'))} | ready_for_contact: {bool(latest_rank.get('ready_for_contact'))}")
         return 0
+    except sqlite3.Error:
+        print("ERROR: No se pudo consultar la ficha. Verifica que la base esté inicializada para Captación Web 2C.", file=sys.stderr)
+        return 1
     finally:
         store.close()
 
@@ -738,6 +823,8 @@ def main(argv: list[str] | None = None) -> int:
             return handle_review_web(cmd_args)
         elif cmd == "review-social":
             return handle_review_social(cmd_args)
+        elif cmd == "review-decision-maker":
+            return handle_review_decision_maker(cmd_args)
         elif cmd == "show-reviews":
             return handle_show_reviews(cmd_args)
         elif cmd == "import-reviews":

@@ -276,6 +276,10 @@ Para `SOLO_REDES_SOCIALES`, registra primero el perfil corroborado con el comand
 ```
 
 ### 3. Consultar revisiones e historial de un prospecto
+
+`show-reviews` abre una base existente en solo lectura. No crea la base si falta ni modifica sus datos, esquema o modo de journal. En bases con WAL, SQLite puede crear o gestionar los archivos auxiliares `-wal` y `-shm` durante la consulta.
+
+En texto, muestra primero la web vigente, las redes confirmadas, el último ranking (una estimación) y lo que falta verificar; después mantiene el historial. La salida `--json` conserva su formato anterior.
 ```powershell
 .\.venv\Scripts\python.exe -m prospector.captacion_web show-reviews `
   --db "data/captacion_web/captacion_web.db" `
@@ -292,9 +296,33 @@ El lote es atómico: cualquier revisión inválida devuelve código 1 y no se gu
   --input "ruta/a/revisiones.json"
 ```
 
+## Etapa 3A · Registro manual del decisor
+
+Usa el ID interno de un prospecto existente. La primera revisión válida añade
+su historial a la base de Captación Web; el comando no crea una base nueva.
+
+```powershell
+python -m prospector.captacion_web review-decision-maker `
+  --db "ruta/a/captacion_web.db" --prospect-id "<id_interno>" `
+  --status DECISOR_ALTERNO_CONFIRMADO --reviewer "OPERADOR" `
+  --name "Ana Ejemplo" --role "Gerente" --source-url "https://example.test/equipo"
+```
+
+También puedes elegir `PROPIETARIO_CONFIRMADO` solo cuando la fuente pública
+respaldó explícitamente la propiedad. Para `PENDIENTE_MANUAL` o
+`NO_VERIFICABLE`, omite el nombre y el cargo. Usa una fuente profesional
+pública, sin datos privados ni enlaces de sesión. El comando no abre la URL
+ni verifica su contenido: el operador documenta la comprobación. Con
+`--reviewed-at` puedes aportar una fecha ISO 8601 con zona horaria; si la
+omites se registra la hora actual en UTC.
+
+`show-reviews` muestra el estado vigente y el historial en texto. La ficha
+no cambia el ranking ni habilita el contacto. La salida `--json` conserva
+su contrato; preparar la exportación al asistente corresponde a 3B.
+
 ## Fuera de esta etapa
 
 Verificación automatizada con scrapers en vivo, conectores externos a plataformas,
-registro de decisor/dueño (RF-05), exportación al asistente IA (RF-08), panel,
+exportación al asistente IA (RF-08), panel,
 Web Factory, Video Factory, CRM y contacto comercial: corresponden a etapas
 posteriores.

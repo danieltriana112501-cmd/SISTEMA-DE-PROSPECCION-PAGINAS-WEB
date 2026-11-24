@@ -565,6 +565,121 @@ class TestStage2Corrections(unittest.TestCase):
             self.assertEqual(store.get_latest_ranking_snapshot("p")["id"], last)
             self.assertEqual(store.conn.execute("SELECT COUNT(*) FROM ranking_snapshot").fetchone()[0], 2)
 
+    def test_show_reviews_never_creates_a_missing_database(self) -> None:
+        missing = self.db_path.parent / "missing" / "web.db"
+        self.assertNotEqual(cli.main([
+            "show-reviews", "--db", str(missing), "--prospect-id", "p",
+        ]), 0)
+        self.assertFalse(missing.parent.exists())
+
+    def test_show_reviews_reads_uncheckpointed_wal_without_changing_data(self) -> None:
+        from contextlib import redirect_stdout
+
+        command = ["show-reviews", "--db", str(self.db_path), "--prospect-id", "p", "--json"]
+        wal_path = self.db_path.with_name(self.db_path.name + "-wal")
+        with CaptacionWebStore(self.db_path) as store:
+            self.assertEqual(store.conn.execute("PRAGMA journal_mode=WAL").fetchone()[0], "wal")
+            store.conn.execute("PRAGMA wal_autocheckpoint=0")
+            main_before = self.db_path.read_bytes()
+            store.conn.execute(
+                """INSERT INTO prospect (id, source, external_id, external_id_kind, name,
+                   category, country, city, business_status, first_seen_at, last_seen_at)
+                   VALUES ('p', 'fixture', 'e', 'PROVIDER', 'Cafe', 'Cafe', 'Colombia',
+                           'Bogota', 'ACTIVO', '2026-11-21', '2026-11-21')"""
+            )
+            store.conn.commit()
+            self.assertEqual(self.db_path.read_bytes(), main_before)
+            wal_before = wal_path.read_bytes()
+            self.assertTrue(wal_before)
+            output = io.StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(cli.main(command), 0)
+            self.assertEqual(json.loads(output.getvalue())["prospect"]["id"], "p")
+            self.assertEqual(self.db_path.read_bytes(), main_before)
+            self.assertEqual(wal_path.read_bytes(), wal_before)
+
+        self.assertFalse(wal_path.exists())
+        main_before = self.db_path.read_bytes()
+        with redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(cli.main(command), 0)
+        self.assertEqual(json.loads(output.getvalue())["prospect"]["id"], "p")
+        self.assertEqual(self.db_path.read_bytes(), main_before)
+
+    def test_show_reviews_lists_pending_without_writing(self) -> None:
+        with CaptacionWebStore(self.db_path) as store:
+            store.conn.execute(
+                """INSERT INTO prospect (id, source, external_id, external_id_kind, name,
+                   category, country, city, business_status, first_seen_at, last_seen_at)
+                   VALUES ('p', 'fixture', 'e', 'REVISION', 'Cafe', 'Cafe', 'Colombia',
+                           'Bogota', 'ACTIVO', '2026-11-21', '2026-11-21')"""
+            )
+            store.conn.commit()
+        before = self.db_path.read_bytes()
+        from contextlib import redirect_stdout
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            result = cli.main(["show-reviews", "--db", str(self.db_path), "--prospect-id", "p"])
+        self.assertEqual(result, 0)
+        self.assertIn("Web vigente: PENDIENTE_VERIFICACION", output.getvalue())
+        self.assertIn("Redes confirmadas vigentes: 0", output.getvalue())
+        self.assertIn("Pendientes: identidad, verificación web, revisión social, ranking", output.getvalue())
+        self.assertEqual(self.db_path.read_bytes(), before)
+
+    def test_cli_decision_maker_records_evidence_and_keeps_history(self) -> None:
+        from contextlib import redirect_stdout
+
+        with CaptacionWebStore(self.db_path) as store:
+            store.conn.execute(
+                """INSERT INTO prospect (id, source, external_id, external_id_kind, name,
+                   category, country, city, business_status, first_seen_at, last_seen_at)
+                   VALUES ('p', 'fixture', 'e', 'PROVIDER', 'Cafe', 'Cafe', 'Colombia',
+                           'Bogota', 'ACTIVO', '2026-11-21', '2026-11-21')"""
+            )
+            store.conn.commit()
+        target = ["--db", str(self.db_path), "--prospect-id", "p"]
+        with redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(cli.main(["show-reviews", *target]), 0)
+        self.assertIn("Decisor: PENDIENTE_MANUAL", output.getvalue())
+        record = ["review-decision-maker", *target, "--reviewer", "REVISOR"]
+        confirm = [*record, "--status", "DECISOR_ALTERNO_CONFIRMADO",
+                   "--name", "Ana Ejemplo", "--role", "Gerente", "--source-url", "https://example.test/equipo",
+                   "--reviewed-at", "2026-11-21T10:00:00-05:00"]
+        self.assertEqual(cli.main(confirm), 0)
+        before = self.db_path.read_bytes()
+        with redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(cli.main(["show-reviews", *target]), 0)
+        report = output.getvalue()
+        for value in ("Decisor: DECISOR_ALTERNO_CONFIRMADO", "Ana Ejemplo", "Gerente",
+                      "https://example.test/equipo", "REVISOR", "2026-11-21T15:00:00+00:00"):
+            self.assertIn(value, report)
+        self.assertEqual(self.db_path.read_bytes(), before)
+        self.assertEqual(cli.main([*record, "--status", "NO_VERIFICABLE",
+                                   "--reviewed-at", "2026-11-21T15:00:00+00:00"]), 0)
+        with redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(cli.main(["show-reviews", *target]), 0)
+        self.assertIn("Decisor: NO_VERIFICABLE", output.getvalue())
+        self.assertIn("Historial de decisor (2)", output.getvalue())
+        with CaptacionWebStore(self.db_path, read_only=True) as store:
+            self.assertEqual(store.conn.execute("SELECT COUNT(*) FROM ranking_snapshot").fetchone()[0], 0)
+
+    def test_cli_decision_maker_rejects_invalid_input_without_writing(self) -> None:
+        with CaptacionWebStore(self.db_path):
+            pass
+        before = self.db_path.read_bytes()
+        cmd = ["review-decision-maker", "--db", str(self.db_path), "--prospect-id", "unknown",
+               "--reviewer", "REVISOR"]
+        self.assertEqual(cli.main([*cmd, "--status", "PROPIETARIO_CONFIRMADO",
+                                   "--name", "Ana Ejemplo", "--role", "Gerente"]), 1)
+        self.assertEqual(cli.main([*cmd, "--status", "PENDIENTE_MANUAL"]), 1)
+        self.assertEqual(cli.main([*cmd, "--status", "PENDIENTE_MANUAL",
+                                   "--reviewed-at", "2026-11-21T15:00:00"]), 1)
+        self.assertEqual(self.db_path.read_bytes(), before)
+        missing = self.db_path.parent / "missing" / "web.db"
+        self.assertEqual(cli.main(["review-decision-maker", "--db", str(missing), "--prospect-id",
+                                   "p", "--reviewer", "REVISOR", "--status", "PENDIENTE_MANUAL"]), 1)
+        self.assertFalse(missing.parent.exists())
+
     def test_cli_manual_review_workflow(self) -> None:
         # Crear prospecto inicial en la base
         pid = "prospect-review-cli"

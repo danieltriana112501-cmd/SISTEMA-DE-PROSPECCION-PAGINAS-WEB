@@ -32,6 +32,7 @@ OWN_TABLES = frozenset(
         "website_review",
         "social_candidate",
         "ranking_snapshot",
+        "decision_maker_review",
     }
 )
 LEGACY_TABLES = frozenset({"leads", "zonas_completadas", "raw_maps_cache", "corridas"})
@@ -246,8 +247,15 @@ CREATE INDEX IF NOT EXISTS idx_ranking_snapshot_prospect ON ranking_snapshot(pro
 
 
 class CaptacionWebStore:
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path, *, read_only: bool = False, existing_only: bool = False) -> None:
         self.db_path = validate_db_target(db_path)
+        if read_only or existing_only:
+            mode = "ro" if read_only else "rw"
+            self.conn = sqlite3.connect(self.db_path.as_uri() + f"?mode={mode}", uri=True)
+            self.conn.row_factory = sqlite3.Row
+            if not read_only:
+                self.conn.execute("PRAGMA foreign_keys = ON")
+            return
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(self.db_path)
         self.conn.row_factory = sqlite3.Row
@@ -603,6 +611,38 @@ class CaptacionWebStore:
             "SELECT * FROM prospect WHERE external_id = ? LIMIT 2", (identifier,)
         ).fetchall()
         return dict(matches[0]) if len(matches) == 1 else None
+
+    def add_decision_maker_review(
+        self, prospect_id: str, *, status: str, name: str | None, role: str | None,
+        source_url: str | None, reviewer: str, reviewed_at: str,
+    ) -> None:
+        with self.conn:
+            self.conn.execute("BEGIN")
+            self.conn.execute(
+                """CREATE TABLE IF NOT EXISTS decision_maker_review (
+                    id INTEGER PRIMARY KEY,
+                    prospect_id TEXT NOT NULL REFERENCES prospect(id),
+                    status TEXT NOT NULL, name TEXT, role TEXT, source_url TEXT,
+                    reviewer TEXT NOT NULL, reviewed_at TEXT NOT NULL
+                )"""
+            )
+            self.conn.execute(
+                """INSERT INTO decision_maker_review
+                   (prospect_id, status, name, role, source_url, reviewer, reviewed_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (prospect_id, status, name, role, source_url, reviewer, reviewed_at),
+            )
+
+    def get_decision_maker_reviews(self, prospect_id: str) -> list[dict[str, Any]]:
+        if not self.conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'decision_maker_review'"
+        ).fetchone():
+            return []
+        rows = self.conn.execute(
+            "SELECT * FROM decision_maker_review WHERE prospect_id = ? ORDER BY reviewed_at DESC, id DESC",
+            (prospect_id,),
+        )
+        return [dict(row) for row in rows]
 
     def add_ranking_snapshot(self, prospect_id: str, ranking: Any) -> str:
         snapshot_id = uuid.uuid4().hex
